@@ -28,7 +28,7 @@ class InMemoryStudentRepository(AbstractRepository):
         return student
     
     async def list_all(self, offset: int, limit: int) -> List[StudentModel]:
-        return self.student_collection.values()
+        return StudentCollection(students=self.student_collection.values())
     
     async def update(self, id: str, student: StudentModel) -> StudentModel:
         """Update an existing entity"""
@@ -42,10 +42,12 @@ class InMemoryStudentRepository(AbstractRepository):
             return bool(student) 
         except KeyError:
             return False
+# init repos only once since overide will get called each API call
+repo = InMemoryStudentRepository({})
 
 async def override_get_student_service() -> StudentService:
-    return StudentService(InMemoryStudentRepository({}))
-
+    """Depencey override with in memory repos"""
+    return StudentService(repo)
 
 app.dependency_overrides[get_student_service] = override_get_student_service
 
