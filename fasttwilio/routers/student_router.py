@@ -1,20 +1,22 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Security, status
 from pymongo import ReturnDocument
 from pymongo.asynchronous.collection import AsyncCollection
 
-from fasttwilio.services.student_service import StudentService
-from fasttwilio.dependencies import get_student_service
 from fasttwilio.db_manager import get_student_collection
+from fasttwilio.dependencies import get_student_service
 from fasttwilio.models import ObjectId, StudentCollection, StudentModel, StudentPayload
+from fasttwilio.services.auth_service import TokenData, validate_token
+from fasttwilio.services.student_service import StudentService
 
 logger = logging.getLogger(__name__)
 
 student_router = APIRouter(
     prefix="/students", tags=["students"], responses={404: {"description": "not found"}}
 )
+
 
 @student_router.post(
     "",
@@ -27,6 +29,7 @@ student_router = APIRouter(
 async def add_student(
     student: StudentModel,
     service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
 ) -> StudentModel:
     """add new student
 
@@ -49,6 +52,7 @@ async def add_student(
 )
 async def list_students(
     service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["read"])],
     offset: int = 0,
     limit: int = Query(default=1000, le=1000),
 ) -> StudentCollection:
@@ -75,6 +79,7 @@ async def list_students(
 async def get_student(
     student_id: str,
     service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["read"])],
 ) -> StudentModel:
     """Get student by id
 
@@ -85,21 +90,25 @@ async def get_student(
     Returns:
         StudentModel: student document
     """
-    if (student := await service.get_by_id(student_id)):
+    if student := await service.get_by_id(student_id):
         return student
 
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="student {student_id} not found")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="student {student_id} not found"
+    )
+
 
 @student_router.get(
     "/search/{student_name}",
     response_description="Get a single student",
     response_model=StudentModel,
     response_model_by_alias=False,
-    operation_id="find_student_by_name"
+    operation_id="find_student_by_name",
 )
 async def find_by_name(
     student_name: str,
     service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
 ) -> StudentModel:
     """Find student by name
 
@@ -115,20 +124,25 @@ async def find_by_name(
     """
     if student := await service.find_by_name(student_name):
         return student
-    
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"student {student_name} not found")
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"student {student_name} not found",
+    )
+
 
 @student_router.put(
     "/{student_id}",
     response_description="Update a student",
     response_model=StudentModel,
     response_model_by_alias=False,
-    operation_id="update_student"
+    operation_id="update_student",
 )
 async def update_student(
     student_id: str,
     student_data: StudentPayload,
     service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
 ) -> StudentModel:
     """_summary_
 
@@ -144,13 +158,24 @@ async def update_student(
     Returns:
         StudentModel: StudentModel
     """
-    if (result := await service.update(student_id, student_data)):
+    if result := await service.update(student_id, student_data):
         return result
-    
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Student {student_id} not found")
 
-@student_router.delete("{student_id", response_description="Delete student", operation_id="delete_student")
-async def delete_student(student_id:str, service: Annotated[StudentService, Depends(get_student_service)],) -> Response:
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Student {student_id} not found"
+    )
+
+
+@student_router.delete(
+    "/{student_id}",
+    response_description="Delete student",
+    operation_id="delete_student",
+)
+async def delete_student(
+    student_id: str,
+    service: Annotated[StudentService, Depends(get_student_service)],
+    token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
+) -> Response:
     """delete student
 
     Args:
@@ -162,7 +187,7 @@ async def delete_student(student_id:str, service: Annotated[StudentService, Depe
     """
     if await service.delete(student_id):
         return Response(status_code=status.HTTP_204_NO_CONTENT)
-    
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Student {id} not found")
 
-
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Student {id} not found"
+    )

@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from fasttwilio.db_manager import db_client
+from fasttwilio.routers.auth_router import auth_router
 from fasttwilio.routers.student_router import student_router
 from fasttwilio.routers.twilio_router import twilio_router
 
@@ -33,13 +34,14 @@ async def db_lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Lab FastAPI and Twilio",
-    description="lab testing work",
+    description="Notification Service with Twilio and MongoDB",
     version=version,
     lifespan=db_lifespan,
 )
 
 app.include_router(twilio_router)
 app.include_router(student_router)
+app.include_router(auth_router)
 
 
 @app.get("/health")
