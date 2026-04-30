@@ -20,7 +20,7 @@ $ poetry run pytest
 ## Security
 To run Bandit to find common security issues in Python code. 
 ```bash
-bandit -c pyproject.toml -r .
+poetry run bandit -c pyproject.toml -r .
 ```
 
 To run pip-audit package vulnerabilities

@@ -1,9 +1,11 @@
 import logging
+import os
 import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from fasttwilio.db_manager import db_client
 from fasttwilio.routers.auth_router import auth_router
@@ -37,6 +39,16 @@ app = FastAPI(
     description="Notification Service with Twilio and MongoDB",
     version=version,
     lifespan=db_lifespan,
+)
+
+# cors
+origins = os.getenv("CORS_ORIGINS", "[]")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(twilio_router)

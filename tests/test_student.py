@@ -62,7 +62,7 @@ async def test_update_student(client: TestClient, token: str):
     response = client.put(
         f"/students/{students[0].get('student_id')}",
         json=payload,
-        headers={"Authorization": f"Bearer {token}"}
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
     data = response.json()
