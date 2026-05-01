@@ -24,7 +24,7 @@ class MongoClientManager:
             Exception: issues connecting to mongo
         """
         try:
-            self.client = AsyncMongoClient(DB_URL)
+            self.client = AsyncMongoClient(DB_URL, uuidRepresentation="standard")
             self.db = self.client.get_database(DB_NAME)
             ping_response = await self.db.command("ping")
 

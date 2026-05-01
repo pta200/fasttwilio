@@ -1,9 +1,10 @@
-import asyncio
+# import asyncio
 import uuid
 from datetime import timedelta
 from typing import Dict, List
 
 import pytest_asyncio
+import uuid_utils
 from fastapi.testclient import TestClient
 
 from fasttwilio.dependencies import get_student_service
@@ -19,11 +20,11 @@ class InMemoryStudentRepository(AbstractRepository):
     def __init__(self, student_collection: Dict):
         self.student_collection = student_collection
 
-    async def get_by_id(self, id: str) -> StudentModel:
+    async def get_by_id(self, id: uuid.UUID) -> StudentModel:
         return self.student_collection.get(id)
 
     async def add(self, student: StudentModel) -> StudentModel:
-        id = str(uuid.uuid4())
+        id = uuid.uuid4()
         student.student_id = id
         self.student_collection[id] = student
         return student
@@ -31,23 +32,24 @@ class InMemoryStudentRepository(AbstractRepository):
     async def list_all(self, offset: int, limit: int) -> List[StudentModel]:
         return StudentCollection(students=self.student_collection.values())
 
-    async def update(self, id: str, student: StudentPayload) -> StudentModel:
+    async def update(self, id: uuid.UUID, student: StudentPayload) -> StudentModel:
         """Update an existing entity"""
         orig_student = self.student_collection[id]
         tmp_student = {}
-        for k, v in orig_student.model_dump(by_alias=False).items():
-            if k == "student_id":
-                tmp_student[k] = v
-            elif v != getattr(student, k) and getattr(student, k) is not None:
+        for k, v in orig_student.model_dump(
+            by_alias=False, exclude={"student_id"}
+        ).items():
+            if v != getattr(student, k) and getattr(student, k) is not None:
                 tmp_student[k] = getattr(student, k)
             else:
                 tmp_student[k] = v
 
         new_student = StudentModel(**tmp_student)
+        new_student.student_id = id
         self.student_collection[id] = new_student
         return new_student
 
-    async def delete(self, id: str) -> bool:
+    async def delete(self, id: uuid.UUID) -> bool:
         """Remove an entity by its identifier"""
         try:
             student = self.student_collection.pop(id)

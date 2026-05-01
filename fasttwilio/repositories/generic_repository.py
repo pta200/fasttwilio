@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from typing import Generic, List, Optional, TypeVar
 
@@ -8,7 +9,7 @@ T = TypeVar("T")
 class AbstractRepository(ABC, Generic[T]):
 
     @abstractmethod
-    async def get_by_id(self, id: str) -> Optional[T]:
+    async def get_by_id(self, id: uuid.UUID) -> Optional[T]:
         """Get an existing entity by id"""
         raise NotImplementedError
 
@@ -23,11 +24,11 @@ class AbstractRepository(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    async def update(self, id: str, entity: T) -> Optional[T]:
+    async def update(self, id: uuid.UUID, entity: T) -> Optional[T]:
         """Update an existing entity"""
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, id: str) -> bool:
+    async def delete(self, id: uuid.UUID) -> bool:
         """Remove an entity by its identifier"""
         raise NotImplementedError

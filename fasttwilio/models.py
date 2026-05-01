@@ -1,10 +1,9 @@
+import uuid
 from typing import Annotated, List, Optional
 
-from bson import ObjectId
+import uuid_utils
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from pydantic.functional_validators import BeforeValidator
-
-PyObectId = Annotated[str, BeforeValidator(str)]
 
 
 class StudentModel(BaseModel):
@@ -13,10 +12,12 @@ class StudentModel(BaseModel):
     # The primary key for the StudentModel, stored as a `str` on the instance.
     # This will be aliased to `_id` when sent to MongoDB,
     # but provided as `id` in the API requests and responses.
-    student_id: Optional[PyObectId] = Field(alias="_id", default=None)
+    student_id: Optional[uuid.UUID] | None = Field(
+        alias="_id", default_factory=uuid_utils.uuid7
+    )
     name: str = Field(...)
-    mobile: str = Field(..., max_length=19)
-    email: str = Field(...)
+    mobile: str = Field(..., max_length=19, unique=True)
+    email: str = Field(..., unique=True)
     course: str = Field(...)
     gpa: float = Field(..., le=4.0)
     model_config = ConfigDict(
@@ -46,7 +47,6 @@ class StudentPayload(BaseModel):
     gpa: Optional[float] = None
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
-        json_encoders={ObjectId: str},
         json_schema_extra={
             "example": {
                 "name": "Jane Doe",

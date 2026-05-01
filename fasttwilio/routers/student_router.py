@@ -1,13 +1,11 @@
 import logging
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Security, status
-from pymongo import ReturnDocument
-from pymongo.asynchronous.collection import AsyncCollection
 
-from fasttwilio.db_manager import get_student_collection
 from fasttwilio.dependencies import get_student_service
-from fasttwilio.models import ObjectId, StudentCollection, StudentModel, StudentPayload
+from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
 from fasttwilio.services.auth_service import TokenData, validate_token
 from fasttwilio.services.student_service import StudentService
 
@@ -35,7 +33,7 @@ async def add_student(
 
     Args:
         student (StudentModel): student payload
-        student_collection (Annotated[Collection, get_student_collection]): student collection
+        student_collection (Annotated[Collection, get_student_service]): student collection
 
     Returns:
         StudentModel: resulting student document
@@ -59,7 +57,7 @@ async def list_students(
     """get a paginated list of students
 
     Args:
-        student_collection (Annotated[Collection, get_student_collection]): student collection
+        student_collection (Annotated[Collection, get_student_service]): student collection
         offset (int, optional): find  offset. Defaults to 0.
         limit (int, optional): find limit. Defaults to Query(default=1000, le=1000).
 
@@ -77,15 +75,15 @@ async def list_students(
     operation_id="get_student",
 )
 async def get_student(
-    student_id: str,
+    student_id: uuid.UUID,
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["read"])],
 ) -> StudentModel:
     """Get student by id
 
     Args:
-        student_id (str): student id
-        student_collection (Annotated[Collection, get_student_collection]): student collection
+        student_id (uuid.UUID): student id
+        student_collection (Annotated[Collection, get_student_service]): student collection
 
     Returns:
         StudentModel: student document
@@ -139,7 +137,7 @@ async def find_by_name(
     operation_id="update_student",
 )
 async def update_student(
-    student_id: str,
+    student_id: uuid.UUID,
     student_data: StudentPayload,
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
@@ -147,9 +145,9 @@ async def update_student(
     """_summary_
 
     Args:
-        student_id (str): student id
+        student_id (uuid.UUID): student id
         student_data (StudentPayload): student data for update
-        student_collection (Annotated[Collection, get_student_collection]): student collection
+        student_collection (Annotated[Collection, get_student_service]): student collection
 
     Raises:
         HTTPException: _description_
@@ -172,15 +170,15 @@ async def update_student(
     operation_id="delete_student",
 )
 async def delete_student(
-    student_id: str,
+    student_id: uuid.UUID,
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
 ) -> Response:
     """delete student
 
     Args:
-        student_id (str): student id
-        student_collection (Annotated[Collection, get_student_collection]): student collection
+        student_id (uuid.UUID): student id
+        student_collection (Annotated[Collection, get_student_service]): student collection
 
     Returns:
         Response: sucessful removal

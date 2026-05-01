@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
 from fasttwilio.repositories.student_repository import AbstractRepository
@@ -11,7 +12,7 @@ class StudentService:
         self.repository = repository
         logger.info("just added repos")
 
-    async def get_by_id(self, id: str) -> StudentModel:
+    async def get_by_id(self, id: uuid.UUID) -> StudentModel:
         return await self.repository.get_by_id(id)
 
     async def add(self, student: StudentModel) -> StudentModel:
@@ -20,10 +21,10 @@ class StudentService:
     async def list_all(self, offset: int, limit: int) -> StudentCollection:
         return await self.repository.list_all(offset, limit)
 
-    async def update(self, id: str, student_data: StudentPayload) -> StudentModel:
+    async def update(self, id: uuid.UUID, student_data: StudentPayload) -> StudentModel:
         return await self.repository.update(id, student_data)
 
-    async def delete(self, id: str) -> bool:
+    async def delete(self, id: uuid.UUID) -> bool:
         return await self.repository.delete(id)
 
     async def find_by_name(self, name: str) -> StudentModel:
