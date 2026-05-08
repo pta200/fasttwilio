@@ -43,7 +43,7 @@ async def test_get_student(client: TestClient, token: str):
     student = response.json()
 
     response = client.get(
-        f"/students/{student.get("student_id")}",
+        f"/students/student/{student.get("student_id")}",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200

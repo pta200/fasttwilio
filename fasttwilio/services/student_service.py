@@ -27,5 +27,8 @@ class StudentService:
     async def delete(self, id: uuid.UUID) -> bool:
         return await self.repository.delete(id)
 
-    async def find_by_name(self, name: str) -> StudentModel:
+    async def find_by_name(self, name: str) -> StudentCollection:
         return await self.repository.find_by_name(name)
+
+    async def search(self, filter: StudentPayload) -> StudentCollection:
+        return await self.repository.search(filter)

@@ -68,7 +68,7 @@ async def list_students(
 
 
 @student_router.get(
-    "/{student_id}",
+    "/student/{student_id}",
     response_description="Get a single student",
     response_model=StudentModel,
     response_model_by_alias=False,
@@ -97,35 +97,37 @@ async def get_student(
 
 
 @student_router.get(
-    "/search/{student_name}",
-    response_description="Get a single student",
-    response_model=StudentModel,
+    "/search",
+    response_description="Student(s) found",
+    response_model=StudentCollection,
     response_model_by_alias=False,
-    operation_id="find_student_by_name",
+    operation_id="search_student",
 )
-async def find_by_name(
-    student_name: str,
+async def search(
+    filter: Annotated[StudentPayload, Query()],
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
-) -> StudentModel:
-    """Find student by name
+) -> StudentCollection:
+    """Search for students
 
     Args:
-        student_name (str): student name
-        student_collection (Annotated[AsyncCollection, Depends): student collection
+        filter (Annotated[StudentPayload, Query): student search fields
+        service (Annotated[StudentService, Depends): student serice
+        token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["write"])].
 
     Raises:
-        HTTPException: failed to find student
+        HTTPException: no students found
 
     Returns:
-        StudentModel: student document
+        StudentCollection: list of students
     """
-    if student := await service.find_by_name(student_name):
-        return student
+    logger.info(f"SEARCHING FOR {filter}")
+    if students := await service.search(filter):
+        return students
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"student {student_name} not found",
+        detail=f"not students found",
     )
 
 

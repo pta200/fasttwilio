@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import uuid_utils
@@ -6,6 +7,8 @@ from pymongo.asynchronous.collection import AsyncCollection
 
 from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
 from fasttwilio.repositories.generic_repository import AbstractRepository
+
+logger = logging.getLogger(__name__)
 
 
 class StudentMonogoRepository(AbstractRepository):
@@ -69,7 +72,22 @@ class StudentMonogoRepository(AbstractRepository):
 
         return True
 
-    async def find_by_name(self, name: uuid.UUID) -> StudentModel:
-        if student := await self.student_collection.find_one({"name": name}):
-            return student
-        return None
+    async def search(self, filter: StudentPayload) -> StudentCollection:
+        """Search students
+
+        Args:
+            filter (StudentPayload): field filter
+
+        Returns:
+            StudentCollection: list of students
+        """
+        conditions = {}
+        for k, v in filter.model_dump(exclude_none=True).items():
+            if k in ("name", "email", "course"):
+                conditions[k] = {"$regex": f"^{v}", "$options": "i"}
+            else:
+                conditions[k] = v
+
+        return StudentCollection(
+            students=await self.student_collection.find(conditions).to_list(None)
+        )
