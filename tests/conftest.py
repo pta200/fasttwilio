@@ -9,7 +9,12 @@ from fastapi.testclient import TestClient
 
 from fasttwilio.dependencies import get_student_service
 from fasttwilio.main import app
-from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
+from fasttwilio.models import (
+    StudentCollection,
+    StudentModel,
+    StudentPage,
+    StudentPayload,
+)
 from fasttwilio.repositories.generic_repository import AbstractRepository
 from fasttwilio.services.auth_service import create_access_token
 from fasttwilio.services.student_service import StudentService
@@ -29,8 +34,14 @@ class InMemoryStudentRepository(AbstractRepository):
         self.student_collection[id] = student
         return student
 
-    async def list_all(self, offset: int, limit: int) -> List[StudentModel]:
+    async def list_all(self, offset: int, limit: int) -> StudentCollection:
         return StudentCollection(students=self.student_collection.values())
+
+    async def paginate(self, offset: int, limit: int) -> StudentPage:
+        return StudentPage(
+            items=self.student_collection.values(),
+            total_items=len(self.student_collection),
+        )
 
     async def update(self, id: uuid.UUID, student: StudentPayload) -> StudentModel:
         """Update an existing entity"""

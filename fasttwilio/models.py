@@ -1,9 +1,8 @@
 import uuid
-from typing import Annotated, List, Optional
+from typing import Generic, List, Optional, TypeVar
 
 import uuid_utils
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from pydantic.functional_validators import BeforeValidator
 
 
 class StudentModel(BaseModel):
@@ -59,6 +58,29 @@ class StudentPayload(BaseModel):
     )
 
 
+class StudentSearch(StudentPayload):
+    """
+    A set of optional updates to be made to a document in the database.
+    """
+
+    offset: int = Field(0, ge=0)
+    limit: int = Field(1000, gt=0, le=1000)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
+            "example": {
+                "name": "Jane Doe",
+                "mobile": "+12125555555",
+                "email": "jdoe@example.com",
+                "course": "Experiments, Science, and Fashion in Nanophotonics",
+                "gpa": 3.0,
+                "offset": "0",
+                "limit": "1000",
+            }
+        },
+    )
+
+
 class StudentCollection(BaseModel):
     """
     A container holding a list of `StudentModel` instances.
@@ -67,3 +89,16 @@ class StudentCollection(BaseModel):
     """
 
     students: List[StudentModel]
+
+
+T = TypeVar("T")
+
+
+class Page(BaseModel, Generic[T]):
+    items: List[T]
+    total_items: int
+
+
+class StudentPage(BaseModel):
+    items: List[StudentModel]
+    total_items: int

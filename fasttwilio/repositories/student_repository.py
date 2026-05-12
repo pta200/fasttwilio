@@ -5,7 +5,12 @@ import uuid_utils
 from pymongo import ReturnDocument
 from pymongo.asynchronous.collection import AsyncCollection
 
-from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
+from fasttwilio.models import (
+    StudentCollection,
+    StudentModel,
+    StudentPage,
+    StudentPayload,
+)
 from fasttwilio.repositories.generic_repository import AbstractRepository
 
 logger = logging.getLogger(__name__)
@@ -17,11 +22,30 @@ class StudentMonogoRepository(AbstractRepository):
         self.student_collection = student_collection
 
     async def get_by_id(self, id: uuid.UUID) -> StudentModel:
+        """Get student by id
+
+        Args:
+            id (uuid.UUID): id
+
+        Returns:
+            StudentModel: student
+        """
         if student := await self.student_collection.find_one({"_id": id}):
             return student
         return None
 
     async def add(self, student: StudentModel) -> StudentModel:
+        """Add a student
+
+        Args:
+            student (StudentModel): student data
+
+        Raises:
+            Exception: failed to add
+
+        Returns:
+            StudentModel: student response with id
+        """
         new_student = student.model_dump(by_alias=True, exclude=["student_id"])
         new_student["_id"] = uuid.UUID(str(uuid_utils.uuid7()))
         result = await self.student_collection.insert_one(new_student)
@@ -72,22 +96,21 @@ class StudentMonogoRepository(AbstractRepository):
 
         return True
 
-    async def search(self, filter: StudentPayload) -> StudentCollection:
-        """Search students
+    async def paginate(self, condition: dict, offset: int, limit: int) -> StudentPage:
+        """Paginate list of users
 
         Args:
-            filter (StudentPayload): field filter
+            condition (dict): student attribute filter
+            offset (int): start
+            limit (int): end
 
         Returns:
-            StudentCollection: list of students
+            StudentPage: List of students for UX page
         """
-        conditions = {}
-        for k, v in filter.model_dump(exclude_none=True).items():
-            if k in ("name", "email", "course"):
-                conditions[k] = {"$regex": f"^{v}", "$options": "i"}
-            else:
-                conditions[k] = v
-
-        return StudentCollection(
-            students=await self.student_collection.find(conditions).to_list(None)
+        return StudentPage(
+            items=await self.student_collection.find(condition)
+            .skip(offset)
+            .limit(limit)
+            .to_list(limit),
+            total_items=await self.student_collection.count_documents(condition),
         )

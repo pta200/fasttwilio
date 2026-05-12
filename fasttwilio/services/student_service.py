@@ -1,7 +1,13 @@
 import logging
 import uuid
 
-from fasttwilio.models import StudentCollection, StudentModel, StudentPayload
+from fasttwilio.models import (
+    StudentCollection,
+    StudentModel,
+    StudentPage,
+    StudentPayload,
+    StudentSearch,
+)
 from fasttwilio.repositories.student_repository import AbstractRepository
 
 logger = logging.getLogger(__name__)
@@ -30,5 +36,17 @@ class StudentService:
     async def find_by_name(self, name: str) -> StudentCollection:
         return await self.repository.find_by_name(name)
 
-    async def search(self, filter: StudentPayload) -> StudentCollection:
-        return await self.repository.search(filter)
+    async def paginate(self, offset: int, limit: int) -> StudentPage:
+        return await self.repository.paginate({}, offset, limit)
+
+    async def search(self, filter: StudentSearch) -> StudentPage:
+        conditions = {}
+        for k, v in filter.model_dump(exclude_none=True).items():
+            if k in ("name", "email", "course"):
+                conditions[k] = {"$regex": f"^{v}", "$options": "i"}
+            elif k in ("offset", "limit"):
+                continue
+            else:
+                conditions[k] = v
+
+        return await self.repository.paginate(conditions, filter.offset, filter.limit)

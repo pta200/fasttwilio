@@ -27,6 +27,16 @@ async def test_get_all_students(client: TestClient, token: str):
 
 
 @pytest.mark.asyncio
+async def test_paginate_students(client: TestClient, token: str):
+    response = client.get(
+        "/students/paginate", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("total_items") == 1
+
+
+@pytest.mark.asyncio
 async def test_get_student(client: TestClient, token: str):
     payload = {
         "course": "Experiments, Science, and Fashion in Nanophotonics",
