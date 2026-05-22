@@ -11,6 +11,7 @@ from fasttwilio.models import (
     StudentPage,
     StudentPayload,
     StudentSearch,
+    Paginate
 )
 from fasttwilio.services.auth_service import TokenData, validate_token
 from fasttwilio.services.student_service import StudentService
@@ -40,6 +41,7 @@ async def add_student(
     Args:
         student (StudentModel): student payload
         student_collection (Annotated[Collection, get_student_service]): student collection
+        token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["write"])
 
     Returns:
         StudentModel: resulting student document
@@ -64,6 +66,7 @@ async def list_students(
 
     Args:
         student_collection (Annotated[Collection, get_student_service]): student collection
+        token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["read"])
         offset (int, optional): find  offset. Defaults to 0.
         limit (int, optional): find limit. Defaults to Query(default=1000, le=1000).
 
@@ -83,20 +86,19 @@ async def list_students(
 async def paginate_students(
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["read"])],
-    offset: int = 0,
-    limit: int = Query(default=1000, le=1000),
+    filter: Annotated[Paginate, Query()],
 ) -> StudentPage:
     """get a paginated list of students
 
     Args:
-        student_collection (Annotated[Collection, get_student_service]): student collection
-        offset (int, optional): find  offset. Defaults to 0.
-        limit (int, optional): find limit. Defaults to Query(default=1000, le=1000).
+        student_collection (Annotated[Collection, get_student_service]): student collection_
+        filter (Annotated[Paginate, Query): filter query params
+        token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["read"])
 
     Returns:
-        StudentCollection: lost of students
+        StudentPage: page of student records
     """
-    return await service.paginate(offset, limit)
+    return await service.paginate(filter)
 
 
 @student_router.get(
@@ -116,6 +118,7 @@ async def get_student(
     Args:
         student_id (uuid.UUID): student id
         student_collection (Annotated[Collection, get_student_service]): student collection
+        token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["read"])
 
     Returns:
         StudentModel: student document
@@ -151,7 +154,7 @@ async def search(
         HTTPException: no students found
 
     Returns:
-        StudentCollection: list of students
+        StudentPage: page of searched student records
     """
     logger.info(f"SEARCHING FOR {filter}")
     if students := await service.search(filter):
@@ -184,8 +187,7 @@ async def update_student(
         student_collection (Annotated[Collection, get_student_service]): student collection
 
     Raises:
-        HTTPException: _description_
-        HTTPException: _description_
+        HTTPException: student not found
 
     Returns:
         StudentModel: StudentModel

@@ -7,6 +7,7 @@ from fasttwilio.models import (
     StudentPage,
     StudentPayload,
     StudentSearch,
+    Paginate
 )
 from fasttwilio.repositories.student_repository import AbstractRepository
 
@@ -36,8 +37,14 @@ class StudentService:
     async def find_by_name(self, name: str) -> StudentCollection:
         return await self.repository.find_by_name(name)
 
-    async def paginate(self, offset: int, limit: int) -> StudentPage:
-        return await self.repository.paginate({}, offset, limit)
+    async def paginate(self, filter: Paginate) -> StudentPage:
+        sort = {}
+        for k, v in filter.model_dump(exclude_none=True).items():
+            if k in ("offset", "limit"):
+                continue
+            else:
+                sort[k] = v
+        return await self.repository.paginate({}, filter.offset, filter.limit, sort)
 
     async def search(self, filter: StudentSearch) -> StudentPage:
         conditions = {}
@@ -49,4 +56,4 @@ class StudentService:
             else:
                 conditions[k] = v
 
-        return await self.repository.paginate(conditions, filter.offset, filter.limit)
+        return await self.repository.paginate(conditions, filter.offset, filter.limit, None)

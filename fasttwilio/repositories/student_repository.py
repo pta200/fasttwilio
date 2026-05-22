@@ -2,7 +2,7 @@ import logging
 import uuid
 
 import uuid_utils
-from pymongo import ReturnDocument
+from pymongo import ReturnDocument, ASCENDING, DESCENDING
 from pymongo.asynchronous.collection import AsyncCollection
 
 from fasttwilio.models import (
@@ -10,6 +10,7 @@ from fasttwilio.models import (
     StudentModel,
     StudentPage,
     StudentPayload,
+    SortType
 )
 from fasttwilio.repositories.generic_repository import AbstractRepository
 
@@ -96,7 +97,7 @@ class StudentMonogoRepository(AbstractRepository):
 
         return True
 
-    async def paginate(self, condition: dict, offset: int, limit: int) -> StudentPage:
+    async def paginate(self, condition: dict, offset: int, limit: int, sort: dict[str, SortType]) -> StudentPage:
         """Paginate list of users
 
         Args:
@@ -107,10 +108,28 @@ class StudentMonogoRepository(AbstractRepository):
         Returns:
             StudentPage: List of students for UX page
         """
-        return StudentPage(
-            items=await self.student_collection.find(condition)
-            .skip(offset)
-            .limit(limit)
-            .to_list(limit),
-            total_items=await self.student_collection.count_documents(condition),
-        )
+        if sort:
+           logger.info("SORT BY")
+           filter = []
+           for k,v in sort.items():
+            if v == "asc":
+                filter.append((k, ASCENDING))
+            else:
+                filter.append((k, DESCENDING))
+            return StudentPage(
+                items=await self.student_collection.find(condition)
+                .sort(filter)
+                .skip(offset)
+                .limit(limit)
+                .to_list(limit),
+                total_items=await self.student_collection.count_documents(condition),
+            )
+            
+        else:        
+            return StudentPage(
+                items=await self.student_collection.find(condition)
+                .skip(offset)
+                .limit(limit)
+                .to_list(limit),
+                total_items=await self.student_collection.count_documents(condition),
+            )

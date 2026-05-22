@@ -44,10 +44,10 @@ class MongoClientManager:
 db_client = MongoClientManager()
 
 
-async def get_student_collection() -> AsyncCollection:
+async def get_collection(collection_name: str) -> AsyncCollection:
     """Load student collection
 
     Returns:
-        AsyncCollection: student collection
+        AsyncCollection: collection
     """
-    return db_client.db.get_collection("student_collection")
+    return db_client.db.get_collection(collection_name)

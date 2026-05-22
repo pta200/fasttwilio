@@ -11,6 +11,7 @@ from fasttwilio.db_manager import db_client
 from fasttwilio.routers.auth_router import auth_router
 from fasttwilio.routers.student_router import student_router
 from fasttwilio.routers.twilio_router import twilio_router
+from fasttwilio.routers.notification_router import notification_router
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ app.add_middleware(
 app.include_router(twilio_router)
 app.include_router(student_router)
 app.include_router(auth_router)
+app.include_router(notification_router)
 
 
 @app.get("/health")
