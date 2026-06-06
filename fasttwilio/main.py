@@ -9,9 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from fasttwilio.db_manager import db_client
 from fasttwilio.routers.auth_router import auth_router
+from fasttwilio.routers.notification_router import notification_router
 from fasttwilio.routers.student_router import student_router
 from fasttwilio.routers.twilio_router import twilio_router
-from fasttwilio.routers.notification_router import notification_router
 
 logger = logging.getLogger(__name__)
 

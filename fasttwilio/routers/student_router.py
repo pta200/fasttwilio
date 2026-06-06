@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, Security
 
 from fasttwilio.dependencies import get_student_service
 from fasttwilio.models import (
+    Page,
+    Paginate,
     StudentCollection,
     StudentModel,
-    StudentPage,
     StudentPayload,
     StudentSearch,
-    Paginate
 )
 from fasttwilio.services.auth_service import TokenData, validate_token
 from fasttwilio.services.student_service import StudentService
@@ -79,7 +79,7 @@ async def list_students(
 @student_router.get(
     "/paginate",
     response_description="paginate lists all students",
-    response_model=StudentPage,
+    response_model=Page,
     response_model_by_alias=False,
     operation_id="paginate_students",
 )
@@ -87,7 +87,7 @@ async def paginate_students(
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["read"])],
     filter: Annotated[Paginate, Query()],
-) -> StudentPage:
+) -> Page:
     """get a paginated list of students
 
     Args:
@@ -96,7 +96,7 @@ async def paginate_students(
         token (Annotated[TokenData, Security, optional): jwt token. Defaults to ["read"])
 
     Returns:
-        StudentPage: page of student records
+        Page: page of student records
     """
     return await service.paginate(filter)
 
@@ -134,7 +134,7 @@ async def get_student(
 @student_router.get(
     "/search",
     response_description="Student(s) found",
-    response_model=StudentPage,
+    response_model=Page,
     response_model_by_alias=False,
     operation_id="search_student",
 )
@@ -142,7 +142,7 @@ async def search(
     filter: Annotated[StudentSearch, Query()],
     service: Annotated[StudentService, Depends(get_student_service)],
     token: Annotated[TokenData, Security(validate_token, scopes=["write"])],
-) -> StudentPage:
+) -> Page:
     """Search for students
 
     Args:
@@ -154,7 +154,7 @@ async def search(
         HTTPException: no students found
 
     Returns:
-        StudentPage: page of searched student records
+        Page: page of searched student records
     """
     logger.info(f"SEARCHING FOR {filter}")
     if students := await service.search(filter):

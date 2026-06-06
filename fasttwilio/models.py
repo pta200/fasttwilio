@@ -1,11 +1,12 @@
-from enum import Enum
 import uuid
-from typing import Generic, List, Optional, TypeVar, Literal, Dict
+from enum import Enum
+from typing import Dict, Generic, List, Literal, Optional, TypeVar
 
 import uuid_utils
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 SortType = Literal["asc", "desc"]
+
 
 class StudentModel(BaseModel):
     """Container for a single student record"""
@@ -59,9 +60,11 @@ class StudentPayload(BaseModel):
         },
     )
 
+
 class Filter(BaseModel):
     offset: int = Field(0, ge=0)
     limit: int = Field(1000, gt=0, le=1000)
+
 
 class Paginate(Filter):
     name: Optional[SortType] = None
@@ -70,10 +73,12 @@ class Paginate(Filter):
     course: Optional[SortType] = None
     gpa: Optional[SortType] = None
 
+
 class StudentSearch(StudentPayload, Filter):
     """
     A set of optional updates to be made to a document in the database.
     """
+
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         json_schema_extra={
@@ -102,13 +107,11 @@ class StudentCollection(BaseModel):
 
 T = TypeVar("T")
 
+
 class Page(BaseModel, Generic[T]):
+    # set rendering config directly in model so FastAPI encoder doesn't get confused by the generic list
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=False)
     items: List[T]
-    total_items: int
-
-
-class StudentPage(BaseModel):
-    items: List[StudentModel]
     total_items: int
 
 
@@ -116,6 +119,7 @@ class NotificationStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
+
 
 class NotificationModel(BaseModel):
     """Container for a single notification record"""
@@ -135,14 +139,11 @@ class NotificationModel(BaseModel):
                 "name": "Semster Report",
                 "delivery": "sms",
                 "contacts": "['+12125555555']",
-                "status": "completed"
+                "status": "completed",
             }
         },
     )
 
-class NotificationPage(BaseModel):
-    items: List[NotificationModel]
-    total_items: int
 
 class NotificationSearch(BaseModel):
     """Container for a notification search"""
@@ -159,7 +160,7 @@ class NotificationSearch(BaseModel):
             "example": {
                 "name": "Semster Report",
                 "delievery": "sms",
-                "status": "completed"
+                "status": "completed",
             }
         },
     )

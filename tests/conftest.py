@@ -12,8 +12,9 @@ from fasttwilio.main import app
 from fasttwilio.models import (
     StudentCollection,
     StudentModel,
-    StudentPage,
+    Page,
     StudentPayload,
+    SortType
 )
 from fasttwilio.repositories.generic_repository import AbstractRepository
 from fasttwilio.services.auth_service import create_access_token
@@ -37,8 +38,8 @@ class InMemoryStudentRepository(AbstractRepository):
     async def list_all(self, offset: int, limit: int) -> StudentCollection:
         return StudentCollection(students=self.student_collection.values())
 
-    async def paginate(self, offset: int, limit: int) -> StudentPage:
-        return StudentPage(
+    async def paginate(self, condition: dict, offset: int, limit: int, sort: dict[str, SortType]) -> Page:
+        return Page(
             items=self.student_collection.values(),
             total_items=len(self.student_collection),
         )

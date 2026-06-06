@@ -1,11 +1,7 @@
 import logging
 import uuid
 
-from fasttwilio.models import (
-    NotificationModel,
-    NotificationPage,
-    NotificationSearch
-)
+from fasttwilio.models import NotificationModel, NotificationSearch, Page
 from fasttwilio.repositories.generic_repository import AbstractRepository
 
 logger = logging.getLogger(__name__)
@@ -21,11 +17,11 @@ class NotificationService:
 
     async def add(self, student: NotificationModel) -> NotificationModel:
         return await self.repository.add(student)
-    
-    async def paginate(self, offset: int, limit: int) -> NotificationPage:
+
+    async def paginate(self, offset: int, limit: int) -> Page:
         return await self.repository.paginate({}, offset, limit)
 
-    async def search(self, filter: NotificationSearch) -> NotificationPage:
+    async def search(self, filter: NotificationSearch) -> Page:
         conditions = {}
         for k, v in filter.model_dump(exclude_none=True).items():
             if k in ("name", "email", "course"):

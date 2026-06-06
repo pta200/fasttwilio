@@ -1,14 +1,12 @@
 import logging
 import uuid
+from typing import List
 
 import uuid_utils
 from pymongo import ReturnDocument
 from pymongo.asynchronous.collection import AsyncCollection
 
-from fasttwilio.models import (
-    NotificationModel,
-    NotificationPage
-)
+from fasttwilio.models import NotificationModel, Page
 from fasttwilio.repositories.generic_repository import AbstractRepository
 
 logger = logging.getLogger(__name__)
@@ -44,21 +42,23 @@ class NotificationMonogoRepository(AbstractRepository):
         Returns:
             NotificationModel: student response with id
         """
-        new_notification = notification.model_dump(by_alias=True, exclude=["student_id"])
+        new_notification = notification.model_dump(
+            by_alias=True, exclude=["student_id"]
+        )
         new_notification["_id"] = uuid.UUID(str(uuid_utils.uuid7()))
         result = await self.notification_collection.insert_one(new_notification)
         if result.inserted_id:
             return new_notification
-        
 
-    async def list_all(self, offset: int, limit: int) -> NotificationPage:
+    async def list_all(self, offset: int, limit: int) -> List[NotificationModel]:
         """Paginate over entities"""
         raise NotImplementedError
-    
-    async def update(self, id: uuid.UUID, notification: NotificationModel) -> NotificationModel:
+
+    async def update(
+        self, id: uuid.UUID, notification: NotificationModel
+    ) -> NotificationModel:
         """Update an existing entity"""
         raise NotImplementedError
-        
 
     async def delete(self, id: uuid.UUID) -> bool:
         """Remove an entity by its identifier"""
@@ -69,7 +69,7 @@ class NotificationMonogoRepository(AbstractRepository):
 
         return True
 
-    async def paginate(self, condition: dict, offset: int, limit: int) -> NotificationPage:
+    async def paginate(self, condition: dict, offset: int, limit: int) -> Page:
         """Paginate list of users
 
         Args:
@@ -78,13 +78,12 @@ class NotificationMonogoRepository(AbstractRepository):
             limit (int): end
 
         Returns:
-            NotificationPage: List of students for UX page
+            Page: List of students for UX page
         """
-        return NotificationPage(
+        return Page(
             items=await self.notification_collection.find(condition)
             .skip(offset)
             .limit(limit)
             .to_list(limit),
             total_items=await self.notification_collection.count_documents(condition),
         )
-

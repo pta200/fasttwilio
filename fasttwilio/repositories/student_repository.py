@@ -2,15 +2,15 @@ import logging
 import uuid
 
 import uuid_utils
-from pymongo import ReturnDocument, ASCENDING, DESCENDING
+from pymongo import ASCENDING, DESCENDING, ReturnDocument
 from pymongo.asynchronous.collection import AsyncCollection
 
 from fasttwilio.models import (
+    Page,
+    SortType,
     StudentCollection,
     StudentModel,
-    StudentPage,
     StudentPayload,
-    SortType
 )
 from fasttwilio.repositories.generic_repository import AbstractRepository
 
@@ -97,7 +97,9 @@ class StudentMonogoRepository(AbstractRepository):
 
         return True
 
-    async def paginate(self, condition: dict, offset: int, limit: int, sort: dict[str, SortType]) -> StudentPage:
+    async def paginate(
+        self, condition: dict, offset: int, limit: int, sort: dict[str, SortType]
+    ) -> Page:
         """Paginate list of users
 
         Args:
@@ -106,27 +108,29 @@ class StudentMonogoRepository(AbstractRepository):
             limit (int): end
 
         Returns:
-            StudentPage: List of students for UX page
+            Page: List of students for UX page
         """
         if sort:
-           logger.info("SORT BY")
-           filter = []
-           for k,v in sort.items():
-            if v == "asc":
-                filter.append((k, ASCENDING))
-            else:
-                filter.append((k, DESCENDING))
-            return StudentPage(
-                items=await self.student_collection.find(condition)
-                .sort(filter)
-                .skip(offset)
-                .limit(limit)
-                .to_list(limit),
-                total_items=await self.student_collection.count_documents(condition),
-            )
-            
-        else:        
-            return StudentPage(
+            logger.info("SORT BY")
+            filter = []
+            for k, v in sort.items():
+                if v == "asc":
+                    filter.append((k, ASCENDING))
+                else:
+                    filter.append((k, DESCENDING))
+                return Page(
+                    items=await self.student_collection.find(condition)
+                    .sort(filter)
+                    .skip(offset)
+                    .limit(limit)
+                    .to_list(limit),
+                    total_items=await self.student_collection.count_documents(
+                        condition
+                    ),
+                )
+
+        else:
+            return Page(
                 items=await self.student_collection.find(condition)
                 .skip(offset)
                 .limit(limit)
